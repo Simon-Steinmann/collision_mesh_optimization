@@ -191,7 +191,7 @@ def get_ext(inPath, extension):
         if extension is not None:
             print('Warning: --input is a file. Ignoring --type=', extension)
             resume = yes_or_no('Do you want to continue?')
-            ext = os.path.splitext(inPath)[1]
+        ext = os.path.splitext(inPath)[1]
     else:
         if extension is None:
             ext = ['.dae', '.stl', '.obj', '.urdf']

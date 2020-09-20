@@ -1,0 +1,5 @@
+
+*.obj
+*.mtl
+/.vscode
+/examples/*_optimized.urdf
