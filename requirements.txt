@@ -2,4 +2,5 @@ trimesh
 transforms3d
 optparse
 numpy
-Cython
+pybullet
+re

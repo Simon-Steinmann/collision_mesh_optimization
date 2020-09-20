@@ -11,11 +11,14 @@ import rospkg
 import signal
 import gc
 import shutil
+import pybullet as p
 
 
 def convert(inFile, outPath, name):
+    print(inFile, outPath, name)
     meshes = trimesh.load(inFile)
     outFile = os.path.join(outPath, name) + '.obj'
+    """  
     try:
         vhacd_mesh = trimesh.interfaces.vhacd.convex_decomposition(meshes,
             resolution=100000,
@@ -32,18 +35,16 @@ def convert(inFile, outPath, name):
     except Exception as e:
         print(e)
     
-    """    
+    """
+    print(meshes)
     trimesh.exchange.export.export_mesh(meshes, outFile)
     p.connect(p.DIRECT)
     name_log = 'vacd_log.txt'
-    p.vhacd(outFile, outFile, name_log, pca=0, convexhullDownsampling=4, planeDownsampling=4, maxNumVerticesPerCH=24)
-    """    
+    p.vhacd(outFile, outFile, name_log, pca=1, convexhullDownsampling=4, planeDownsampling=4, maxNumVerticesPerCH=24)      
     gc.collect()
 
 
 def convert_all(pool, sourcePath, outPath=None, ext=None, recursive=True, replace=False):
-    if ext is None:
-        ext = ['.dae', '.stl', '.obj']
     print(sourcePath, outPath, ext)
     fileList = []
     if recursive:
@@ -51,7 +52,7 @@ def convert_all(pool, sourcePath, outPath=None, ext=None, recursive=True, replac
         for root, directories, files in os.walk(sourcePath):
             for filename in files:
                 if os.path.splitext(filename)[1] in ext:
-                    filepath = os.path.join(root, filename)
+                    filepath = os.path.join(os.path.abspath(root), filename)
                     fileList.append(filepath)
     else:
         # find all files of in sourcepath that match the extension. Only in specified path.
@@ -59,7 +60,7 @@ def convert_all(pool, sourcePath, outPath=None, ext=None, recursive=True, replac
                     and os.path.splitext(f)[1] in ext]
     for f in fileList:
         print(f"converting: {f}")
-        name = os.path.splitext(f)[0]
+        name = os.path.splitext(os.path.basename(f))[0]
         if ext == '.urdf':
             convert_from_urdf(pool, os.path.join(sourcePath, f), replace)
         else:
@@ -168,6 +169,7 @@ def initializer():
     """Ignore CTRL+C in the worker process."""
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
+
 def yes_or_no(question):
     answer = input(question + "(y/n): ").lower().strip()
     print("")
@@ -246,8 +248,15 @@ if __name__ == "__main__":
 
     if inPath is None:
         sys.exit('No input! set with --input=<path>')
+    else:
+        inPath = os.path.abspath(inPath)
     if outPath is None:
-        outPath = inPath
+        if os.path.isfile(inPath):
+            outPath = os.path.abspath(os.path.dirname(inPath))
+        else:
+            outPath = os.path.abspath(inPath)
+    else:
+        outPath = os.path.abspath(outPath)
     ext = get_ext(inPath, options.ext)
 
     try:
